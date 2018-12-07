@@ -1,0 +1,84 @@
+---
+
+################################################################################
+# BEGIN Prereqs
+- name: install elastic rpm key
+  rpm_key:
+    key: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+    state: present
+
+- name: install prereqs
+  yum:
+    name:
+      - "java-1.8.0-openjdk"
+      - "httpd"
+      - "httpd-tools"
+    state: present
+
+# END Prereqs
+################################################################################
+
+################################################################################
+# BEGIN Elasticsearch
+- name: install elasticsearch
+  yum:
+    name: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{elk_version}}.rpm"
+    state: present
+
+- name: sysconfig elasticsearch
+  copy:
+    name: "elasticsearch.sysconf"
+    dest: "/etc/sysconfig/elasticsearch"
+  notify: restart elasticsearch
+
+- name: configure elasticsearch
+  template:
+    name: "elasticsearch.yml.j2"
+    dest: "/etc/elasticsearch/elasticsearch.yml"
+  notify: restart elasticsearch
+
+- name: start and enable elasticsearch
+  service:
+    name: elasticsearch
+    state: started
+    enabled: true
+# END Elasticsearch
+################################################################################
+
+
+################################################################################
+# BEGIN Logstash
+- name: install logstash
+  yum:
+    name: "https://artifacts.elastic.co/downloads/logstash/logstash-{{elk_version}}.rpm"
+    state: present
+
+- name: start logstash
+  service:
+    name: logstash
+    state: started
+    enabled: true
+# END Logstash
+################################################################################
+
+
+################################################################################
+# BEGIN Kibana
+- name: install kibana
+  yum:
+    name: "https://artifacts.elastic.co/downloads/kibana/kibana-{{elk_version}}.rpm"
+    state: present
+
+- name: configure kibana
+  template:
+    name: "kibana.yml.j2"
+    dest: "/etc/kibana/kibana.yml"
+  notify: restart kibana
+
+- name: start kibana
+  service:
+    name: kibana
+    state: started
+    enabled: true
+# END Kibana
+################################################################################

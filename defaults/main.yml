@@ -1,0 +1,4 @@
+---
+# defaults file for ansible-role-elk
+#
+elk_version: "6.2.4"
