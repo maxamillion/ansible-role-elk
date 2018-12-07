@@ -80,5 +80,12 @@
     name: kibana
     state: started
     enabled: true
+
+- name: allow port 80
+  firewalld:
+    service: http
+    state: enabled
+    permanent: true
+    immediate: true
 # END Kibana
 ################################################################################
