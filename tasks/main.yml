@@ -81,9 +81,9 @@
     state: started
     enabled: true
 
-- name: allow port 80
+- name: allow port 5601
   firewalld:
-    service: http
+    port: 5601/tcp
     state: enabled
     permanent: true
     immediate: true
