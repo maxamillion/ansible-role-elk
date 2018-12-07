@@ -27,13 +27,13 @@
 
 - name: sysconfig elasticsearch
   copy:
-    name: "elasticsearch.sysconf"
+    src: "elasticsearch.sysconf"
     dest: "/etc/sysconfig/elasticsearch"
   notify: restart elasticsearch
 
 - name: configure elasticsearch
   template:
-    name: "elasticsearch.yml.j2"
+    src: "elasticsearch.yml.j2"
     dest: "/etc/elasticsearch/elasticsearch.yml"
   notify: restart elasticsearch
 
@@ -71,7 +71,7 @@
 
 - name: configure kibana
   template:
-    name: "kibana.yml.j2"
+    src: "kibana.yml.j2"
     dest: "/etc/kibana/kibana.yml"
   notify: restart kibana
 
