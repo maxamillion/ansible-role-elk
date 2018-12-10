@@ -14,3 +14,8 @@
   service:
     name: filebeat
     state: restarted
+
+- name: restart journalbeat
+  service:
+    name: journalbeat
+    state: journalbeat
