@@ -7,13 +7,26 @@
     key: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
     state: present
 
+- name: setup elastic yum repo
+  copy:
+    src: elastic.repo
+    dest: /etc/yum.repos.d/elastic.repo
+
 - name: install prereqs
   yum:
     name:
       - "java-1.8.0-openjdk"
       - "httpd"
       - "httpd-tools"
+      - "firewalld"
+      - "python-firewall"
     state: present
+
+- name: start/enable firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: true
 
 # END Prereqs
 ################################################################################
@@ -22,7 +35,7 @@
 # BEGIN Elasticsearch
 - name: install elasticsearch
   yum:
-    name: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{elk_version}}.rpm"
+    name: elasticsearch
     state: present
 
 - name: sysconfig elasticsearch
@@ -37,11 +50,21 @@
     dest: "/etc/elasticsearch/elasticsearch.yml"
   notify: restart elasticsearch
 
+- name: setup geoip plugin
+  shell: "/usr/share/elasticsearch/bin/elasticsearch-plugin install ingest-geoip -s && touch /usr/local/ingest-geoip-installed"
+  args:
+    stdin: 'y\n'
+    creates: "/usr/local/ingest-geoip-installed"
+  register: output
+  failed_when: output.rc != 0
+  changed_when: False
+
 - name: start and enable elasticsearch
   service:
     name: elasticsearch
     state: started
     enabled: true
+
 # END Elasticsearch
 ################################################################################
 
@@ -50,7 +73,7 @@
 # BEGIN Logstash
 - name: install logstash
   yum:
-    name: "https://artifacts.elastic.co/downloads/logstash/logstash-{{elk_version}}.rpm"
+    name: "logstash"
     state: present
 
 - name: start logstash
@@ -66,7 +89,7 @@
 # BEGIN Kibana
 - name: install kibana
   yum:
-    name: "https://artifacts.elastic.co/downloads/kibana/kibana-{{elk_version}}-x86_64.rpm"
+    name: "kibana"
     state: present
 
 - name: configure kibana
@@ -88,4 +111,90 @@
     permanent: true
     immediate: true
 # END Kibana
+################################################################################
+
+################################################################################
+# BEGIN Filebeat
+- name: install filebeat
+  yum:
+    name: "filebeat"
+    state: present
+
+- name: configure filebeat
+  template:
+    src: "filebeat.yml.j2"
+    dest: "/etc/filebeat/filebeat.yml"
+  notify: restart filebeat
+
+- name: enable system filebeat
+  shell: "filebeat modules enable system && touch /usr/local/filebeat-system-module-enabled"
+  args:
+    creates: "/usr/local/filebeat-system-module-enabled"
+  register: output
+  failed_when: output.rc != 0
+  changed_when: False
+
+- name: setup filebeat
+  shell: "filebeat setup && /usr/local/filebeat-setup"
+  args:
+    creates: "/usr/local/filebeat-setup"
+  register: output
+  failed_when: output.rc != 0
+  changed_when: False
+
+- name: setup filebeat dashboards
+  shell: "filebeat setup -e -E output.logstash.enabled=false -E output.elasticsearch.hosts=['localhost:9200'] setup.kibana.host={{kb_server_host}}:5601 && /usr/local/filebeat-setup-dashboards"
+  args:
+    creates: "/usr/local/filebeat-setup-dashboards"
+  register: output
+  failed_when: output.rc != 0
+  changed_when: False
+
+- name: start filebeat
+  service:
+    name: filebeat
+    state: started
+    enabled: true
+
+
+# END Filebeat
+################################################################################
+
+################################################################################
+# BEGIN Journalbeat
+- name: install journalbeat
+  yum:
+    name: "journalbeat"
+    state: present
+
+- name: configure journalbeat
+  template:
+    src: "journalbeat.yml.j2"
+    dest: "/etc/journalbeat/journalbeat.yml"
+  notify: restart journalbeat
+
+- name: setup journalbeat
+  shell: "journalbeat setup -E output.logstash.enabled=false -E output.elasticsearch.hosts=['localhost:9200'] setup.kibana.host={{kb_server_host}}:5601 && /usr/local/journalbeat-setup"
+  args:
+    creates: "/usr/local/journalbeat-setup"
+  register: output
+  failed_when: output.rc != 0
+  changed_when: False
+
+- name: setup journalbeat templates
+  shell: "journalbeat setup --template -E output.logstash.enabled=false -E output.elasticsearch.hosts=['localhost:9200'] setup.kibana.host={{kb_server_host}}:5601 && /usr/local/journalbeat-setup-templates"
+  args:
+    creates: "/usr/local/journalbeat-setup-templates"
+  register: output
+  failed_when: output.rc != 0
+  changed_when: False
+
+- name: start journalbeat
+  service:
+    name: journalbeat
+    state: started
+    enabled: true
+
+
+# END Filebeat
 ################################################################################

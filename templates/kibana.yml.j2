@@ -102,3 +102,7 @@ server.host: {{kb_server_host|default("localhost")}}
 # The default locale. This locale can be used in certain circumstances to substitute any missing
 # translations.
 #i18n.defaultLocale: "en"
+xpack.infra:
+  sources:
+    default:
+      logAlias: "filebeat-*,journalbeat-*"

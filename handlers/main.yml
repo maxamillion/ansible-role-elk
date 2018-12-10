@@ -9,3 +9,8 @@
   service:
     name: kibana
     state: restarted
+
+- name: restart filebeat
+  service:
+    name: filebeat
+    state: restarted
