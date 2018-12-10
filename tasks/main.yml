@@ -110,6 +110,11 @@
     state: enabled
     permanent: true
     immediate: true
+
+- name: wait for kibana to be up
+  wait_for:
+    host: "{{kb_server_host}}"
+    port: 5601
 # END Kibana
 ################################################################################
 
@@ -135,7 +140,7 @@
   changed_when: False
 
 - name: setup filebeat
-  shell: "filebeat setup && /usr/local/filebeat-setup"
+  shell: "filebeat setup && touch /usr/local/filebeat-setup"
   args:
     creates: "/usr/local/filebeat-setup"
   register: output
