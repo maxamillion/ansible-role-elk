@@ -148,12 +148,14 @@
   changed_when: False
 
 - name: setup filebeat dashboards
-  shell: "filebeat setup -e -E output.logstash.enabled=false -E output.elasticsearch.hosts=['localhost:9200'] setup.kibana.host={{kb_server_host}}:5601 && /usr/local/filebeat-setup-dashboards"
+  shell: "filebeat setup -e -E output.logstash.enabled=false -E output.elasticsearch.hosts=['localhost:9200'] setup.kibana.host={{kb_server_host}}:5601 &&  touch /usr/local/filebeat-setup-dashboards"
   args:
     creates: "/usr/local/filebeat-setup-dashboards"
   register: output
   failed_when: output.rc != 0
   changed_when: False
+  tags:
+    - debugging
 
 - name: start filebeat
   service:
@@ -179,7 +181,7 @@
   notify: restart journalbeat
 
 - name: setup journalbeat
-  shell: "journalbeat setup -E output.logstash.enabled=false -E output.elasticsearch.hosts=['localhost:9200'] setup.kibana.host={{kb_server_host}}:5601 && /usr/local/journalbeat-setup"
+  shell: "journalbeat setup -E output.logstash.enabled=false -E output.elasticsearch.hosts=['localhost:9200'] setup.kibana.host={{kb_server_host}}:5601 && touch /usr/local/journalbeat-setup"
   args:
     creates: "/usr/local/journalbeat-setup"
   register: output
@@ -187,7 +189,7 @@
   changed_when: False
 
 - name: setup journalbeat templates
-  shell: "journalbeat setup --template -E output.logstash.enabled=false -E output.elasticsearch.hosts=['localhost:9200'] setup.kibana.host={{kb_server_host}}:5601 && /usr/local/journalbeat-setup-templates"
+  shell: "journalbeat setup --template -E output.logstash.enabled=false -E output.elasticsearch.hosts=['localhost:9200'] setup.kibana.host={{kb_server_host}}:5601 && touch /usr/local/journalbeat-setup-templates"
   args:
     creates: "/usr/local/journalbeat-setup-templates"
   register: output
